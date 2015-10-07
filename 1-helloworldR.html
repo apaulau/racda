@@ -87,7 +87,7 @@ print(v2)</code></pre>
 <p>Вывести вектор <code>v3</code> длины <code>3</code>, состоящий из случайно выбранных элементов векторов <code>v1</code> и <code>v2</code>.</p>
 <pre class="r"><code>v3 &lt;- sample(c(v1, v2), 3)
 print(v3)</code></pre>
-<pre><code>## [1]  6.0  4.5 10.0</code></pre>
+<pre><code>## [1] 10.0  5.5  6.5</code></pre>
 </div>
 <div id="-----------.--s---." class="section level2">
 <h2>2. (Вектор) Задана некоторая строка текста, состоящая только из строчных символов русского языка. Например <code>s &lt;- “приветмирр”</code>.</h2>
@@ -229,6 +229,21 @@ print(m2)</code></pre>
 ## June      20.25 16.00 42.25     30.25
 ## July      25.00 20.25 16.00     36.00
 ## September 36.00 30.25 25.00     16.00</code></pre>
+</div>
+<div id="----dataframe" class="section level2">
+<h2>4. Создать произвольную таблицу данных (Dataframe)</h2>
+<p>В не будут присутствовать данные следующих типов: числовые, текстовые, условные, факторы.</p>
+<pre class="r"><code>df &lt;- data.frame(number=sample(1:10), text=sample(month.name[1:10]), bool=sample(rep(c(FALSE, TRUE), 5)), fact=as.factor(sample(rep(c('A', 'B'), 5))))</code></pre>
+<p>Вывести все такие текстовые значения для заданного фактора, для которых числовые значения больше заданного значения.</p>
+<pre class="r"><code>df[df$fact == &quot;A&quot; &amp; df$number &gt; 2, ]</code></pre>
+<pre><code>##    number    text  bool fact
+## 5       4  August  TRUE    A
+## 6      10   April FALSE    A
+## 7       8    July  TRUE    A
+## 10      6 October FALSE    A</code></pre>
+</div>
+<div id="---------x1-x2-x3----n--." class="section level2">
+<h2>5. (Таблица) ИЗ файла загрузить таблицу, состоящую из трех переменных (x1, x2, x3) (переменная = столбец) и n наблюдений (строк).</h2>
 </div>
 
 
