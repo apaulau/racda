@@ -1,0 +1,182 @@
+---
+title: "Hello World of R"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. (Вектор) Создать векторы `v1` и `v2`:
+
+Вектор  `v1`  состоит  из  последовательных  членов  арифметической  прогрессии.  Первый  член прогрессии равен вашему номеру в списке группы, последний – числу `6.5`, а количество элементов последовательности – длине вашей фамилии.  
+
+Let's create initial values
+```{r}
+surname <- 'PAULAU'
+listNumber <- 4
+```
+
+And create `v1` vector as described above.
+```{r v1}
+v1 <- seq(listNumber, 6.5, length.out = nchar(surname))
+print(v1)
+```
+
+Вектор  `v2`  состоит  из  последовательных  членов  геометрической  прогрессии.  Первый  член прогрессии равен `14`  минус  ваш  номер  в  списке  группы,  последний  –  числу  `100`,  а  количество элементов последовательности – длине вашего имени. 
+```{r v2}
+v2 <- seq(14 - listNumber, 100, length.out = nchar(surname))
+print(v2)
+```
+
+Вывести вектор `v3` длины `3`, состоящий из случайно выбранных элементов векторов `v1` и `v2`.
+```{r v3}
+v3 <- sample(c(v1, v2), 3)
+print(v3)
+```
+
+## 2. (Вектор) Задана некоторая строка текста, состоящая только из строчных символов русского языка. Например `s <- “приветмирр”`.
+Let's introduce alphabet entity that will help with getting letter's number
+```{r alphabet}
+create.alphabet <- function(string) {
+  alphabet <- strsplit(string, c())[[1]]
+  
+  letter <- function(number) {
+    alphabet[number]
+  }
+  
+  number <- function (letter) {
+    number <- grep(letter, alphabet)
+    ifelse(length(number) == 0, 0, number)
+  }
+  
+  assignNumbers <- function(string) {
+    sapply(strsplit(string, c())[[1]], number)
+  }
+  
+  assignLetters <- function(numbers) {
+    sapply(numbers, letter)
+  }
+
+  list(assignNumbers = assignNumbers,
+       assignLetters = assignLetters,
+       length = length(alphabet))
+}
+
+alphabet <- create.alphabet('абвгдеёжзийклмнопрстуфхцчшщъыьэюя')
+```
+
+<!--Enter string:
+```{r, echo=FALSE}
+
+```
+-->
+### __1 вариант.__ Найти сумму порядковых номеров в алфавите символов строки `s`. Нумерация букв алфавита начинается с `1`. Например, для `s = “абба”` ответ должен быть 6. 
+```{r abba}
+s <- 'абба'
+print(alphabet$assignNumbers(s))
+print(sum(alphabet$assignNumbers(s)))
+```
+
+### __2 вариант.__ Найти  произведение  тех  порядковых  номеров  в  алфавите  символов  строки  `s`, номера которых нечетные. Нумерация букв алфавита начинается с `1`. Например, для `s = “аббв”` ответ должен быть `3`. 
+```{r abbv}
+s <- 'аббв'
+oddChars <- alphabet$assignNumbers(s)[c(TRUE, FALSE)]
+print(oddChars)
+print(prod(oddChars))
+```
+
+### __3 вариант.__  Зашифровать  текст  s  с  помощью  шифра  Цезаря.  Например,  для  s  =  “абба”  ответ должен быть “гддг”.
+```{r ceasar}
+s <- 'абба'
+
+create.ceasar <- function(key) {
+  alphabet <- create.alphabet('абвгдеёжзийклмнопрстуфхцчшщъыьэюя')
+  
+  shift <- function(number) {
+    (number + key) %% alphabet$length
+  }
+  
+  unshift <- function(number) {
+    (number - key) %% alphabet$length
+  }
+  
+  setKey <- function(number) {
+    key <<- number
+  }
+  
+  code <- function(string) {
+    paste(alphabet$assignLetters(shift(alphabet$assignNumbers(string))), collapse = '')
+  }
+  
+  encode <- function(string) {
+    paste(alphabet$assignLetters(unshift(alphabet$assignNumbers(string))), collapse = '')
+  }
+  
+  list(setKey = setKey, code = code, encode = encode)
+}
+
+scrambler <- create.ceasar(3)
+
+print(scrambler$code(s))
+print(scrambler$encode(scrambler$code(s)))
+```
+
+## 3. (Матрица) Создать квадратную матрицу `m` размером 5 x 5.
+Заполнить ее элементами вектора `v1` построчно, если первый элемент `v3` больше `10`, иначе по столбцам. Если длины `v1` не хватает, то пусть элементы этого вектора повторяются.
+```{r m}
+m <- matrix(v1, 5, 5, v3[1] > 10)
+print(m)
+```
+
+Присвоить столбцам имена следующим образом: если `N` – это ваш номер по списку, то `n` равно остатку от деления `N` на `12` плюс `1`, тогда первый столбец имеет имя n-го месяца на английском языке, второй – `(n+1)`-го и т.д. Строки присвоить такие же имена  как  и  столбцам.
+```{r}
+start <- listNumber %% 12 + 1
+rownames(m) <- month.name[start : (start + 4)] -> colnames(m)
+print(m)
+```
+
+Матрица  `m1`  получается  из  матрицы  `m`  путем  вычеркивания  строк  и столбцов, чьи имена начинаются на буквы от `A` до `F`.
+```{r m1}
+m1 <- m[-grep('^[A-F]', rownames(m)), -grep('^[A-F]', colnames(m))]
+```
+
+Для матрицы `m1` найти: определитель, собственные вектора и значения, вектор диагональных элементов, $m1^2$ и матрицу `m2`, у которой $v2[i][j]$ = $(v1[i][j])^2$
+
+Determinant
+```{r det}
+print(det(m1))
+```
+
+Eigen values
+```{r eigen}
+print(eigen(m1)$values)
+```
+
+Diagonal
+```{r diag}
+print(diag(m1))
+```
+
+Squared
+```{r square}
+print(m1 %*% m1)
+```
+
+```{r m2}
+m2 <- m1 * m1
+print(m2)
+```
+
+## 4. Создать произвольную таблицу данных (Dataframe)
+В не будут присутствовать данные следующих  типов:  числовые,  текстовые,  условные,  факторы.
+```{r df}
+df <- data.frame(number=sample(1:10), text=sample(month.name[1:10]), bool=sample(rep(c(FALSE, TRUE), 5)), fact=as.factor(sample(rep(c('A', 'B'), 5))))
+```
+
+Вывести  все  такие  текстовые значения для заданного фактора, для которых числовые значения больше заданного значения.
+```{r}
+df[df$fact == "A" & df$number > 2, ]
+```
+
+## 5. (Таблица) ИЗ файла загрузить таблицу, состоящую из трех переменных (x1, x2, x3) (переменная = столбец) и n наблюдений (строк).
