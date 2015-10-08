@@ -27,12 +27,14 @@ print(v1)
 Вектор  `v2`  состоит  из  последовательных  членов  геометрической  прогрессии.  Первый  член прогрессии равен `14`  минус  ваш  номер  в  списке  группы,  последний  –  числу  `100`,  а  количество элементов последовательности – длине вашего имени. 
 
 ```r
-v2 <- seq(14 - listNumber, 100, length.out = nchar(surname))
+reversedListNumber <- 14 - listNumber
+q <- (100 / reversedListNumber)^(1 / (nchar(surname) - 1))
+v2 <- (reversedListNumber)*q^(1:nchar(surname) - 1)
 print(v2)
 ```
 
 ```
-## [1]  10  28  46  64  82 100
+## [1]  10.00000  15.84893  25.11886  39.81072  63.09573 100.00000
 ```
 
 Вывести вектор `v3` длины `3`, состоящий из случайно выбранных элементов векторов `v1` и `v2`.
@@ -43,7 +45,7 @@ print(v3)
 ```
 
 ```
-## [1] 10.0  5.5  6.5
+## [1]  4.50000 63.09573  4.00000
 ```
 
 ## 2. (Вектор) Задана некоторая строка текста, состоящая только из строчных символов русского языка. Например `s <- “приветмирр”`.
@@ -294,11 +296,137 @@ df[df$fact == "A" & df$number > 2, ]
 ```
 
 ```
-##    number    text  bool fact
-## 5       4  August  TRUE    A
-## 6      10   April FALSE    A
-## 7       8    July  TRUE    A
-## 10      6 October FALSE    A
+##    number  text  bool fact
+## 3       4 April  TRUE    A
+## 4       7  July  TRUE    A
+## 9       3  June FALSE    A
+## 10      9   May FALSE    A
 ```
 
 ## 5. (Таблица) ИЗ файла загрузить таблицу, состоящую из трех переменных (x1, x2, x3) (переменная = столбец) и n наблюдений (строк).
+Let's create source file
+
+```r
+n <- 100
+out <- data.frame(x1 = runif(n, 0, 10), x2 = runif(n, 0, 10), x3 = runif(n, 0, 10))
+if (!dir.exists('data')) { 
+  dir.create('data')
+}
+write.table(out, "data/lab1.csv")
+rm(out)
+```
+And read :)
+
+```r
+table <- read.table("data/lab1.csv")
+head(table)
+```
+
+```
+##          x1       x2        x3
+## 1 0.7547591 4.880912 0.6160506
+## 2 3.8299479 9.183389 7.0823251
+## 3 3.2706650 4.447525 4.4229089
+## 4 3.5037282 8.319912 9.5715230
+## 5 6.1827838 5.023445 9.1424412
+## 6 3.2448470 4.325282 2.3279649
+```
+
+### Вариант 1. $$\sum_{i=1}^n i x^2_{1, i} x^4_{2, i \% n + 1} x^3_{2, (i + 1) \% n + 1} $$
+
+```r
+sum1 <- sum(seq_along(table[, 2]) * table[, 1]^2 * table[seq_along(table[, 2]) %% n + 1, 2]^4 * table[(seq_along(table[, 2]) + 1) %% n + 1, 2]^3)
+print(sum1)
+```
+
+```
+## [1] 1.19336e+11
+```
+
+### Вариант 2. $$\sum_{i=1}^n ((i - 1) \% 5 + 1) x^i_{(i - 1) \% 3 + 1, i} $$
+
+```r
+sum2 <- sum(sapply(seq_along(table[, 1]), function(i) {
+  ((i - 1) %% 5 + 1) * table[i, (i - 1) %% 3 + 1]^i
+}))
+print(sum2)
+```
+
+```
+## [1] 3.719788e+87
+```
+
+### Вариант 3. $$\sum_{i=1}^n (\frac{x_{1, i}}{x_{2, i}} - x_{3, i})^2 (x_{1, 1} + x_{(i - 1) \% 3 + 1, 1}) $$
+
+```r
+sum3 <- sum(sapply(seq_along(table[, 1]), function(i) {
+  (table[i, 1] / table[i, 2] - table[i, 3])^2 * (table[1, 1] + table[1, (i - 1) %% 3 + 1])
+}))
+print(sum3)
+```
+
+```
+## [1] 7137.757
+```
+
+### Вариант 4. $$\sum_{i=1}^n (I\{x_{1, i} < x_{2, i} \land x_{1, i} < x_{3, i} \}(x_{3, i} - x_{1, i})(x_{2, i} - x_{1, i}) + I\{x_{2, i} > x_{3, i}\}x_{1, i}^2) $$
+
+```r
+start.time <- Sys.time()
+subset1 <- table
+subset1[!(table[, 1] < table[, 2] & table[, 1] < table[, 3]), ] <- 0
+subset2 <- table
+subset2[!(table[, 2] > table[, 3]), ] <- 0
+sum4 <- sum((subset1[, 3] - subset1[,1])* (subset1[, 2] - subset1[, 1]) + subset2[, 1]^2)
+end.time <- Sys.time()
+print(sum4)
+```
+
+```
+## [1] 2260.263
+```
+
+```r
+print(end.time - start.time)
+```
+
+```
+## Time difference of 0.01433516 secs
+```
+
+
+```r
+start.time <- Sys.time()
+sum4 <- sum(sapply(seq_along(table[, 1]), function(i) {
+  ifelse(table[i, 1] < table[i, 2] & table[i, 1] < table[i, 3], 1, 0) * (table[i, 3] - table[i, 1]) * (table[i, 2] - table[i, 1]) + ifelse(table[i, 2] > table[i, 3], 1, 0) * table[i, 1]^2
+}))
+end.time <- Sys.time()
+print(sum4)
+```
+
+```
+## [1] 2260.263
+```
+
+```r
+print(end.time - start.time)
+```
+
+```
+## Time difference of 0.03899026 secs
+```
+
+### Вариант 5. $$\sum_{j=1}^3 \sum_{i=1}^n (I\{x_{j, i} \le x_{1, i} \land x_{j, i} < x_{2, i} \land x_{j, i} < x_{3, i} \} x_{j \% 3 + 1, i}^{(i + j) \% 3 + 1} $$
+
+```r
+sum5 <- sum(sapply(seq_along(table), function(j) {
+  sapply(seq_along(table[, 1]), function(i) {
+    ifelse(table[i, j] <= table[i, 1] & table[i, j] <= table[i, 2] & table[i, j] <= table[i, 3], 1, 0) * table[i, j %% 3 + 1]^((i + j) %% 3 + 1)
+  })
+}))
+print(sum5)
+```
+
+```
+## [1] 15063.38
+```
