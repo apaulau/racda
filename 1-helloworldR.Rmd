@@ -49,13 +49,8 @@ create.alphabet <- function(string) {
     alphabet[number]
   }
   
-  number <- function (letter) {
-    number <- grep(letter, alphabet)
-    ifelse(length(number) == 0, 0, number)
-  }
-  
   assignNumbers <- function(string) {
-    sapply(strsplit(string, c())[[1]], number)
+    match(strsplit(string, c())[[1]], alphabet)
   }
   
   assignLetters <- function(numbers) {
@@ -70,11 +65,6 @@ create.alphabet <- function(string) {
 alphabet <- create.alphabet('абвгдеёжзийклмнопрстуфхцчшщъыьэюя')
 ```
 
-<!--Enter string:
-```{r, echo=FALSE}
-
-```
--->
 ### __1 вариант.__ Найти сумму порядковых номеров в алфавите символов строки `s`. Нумерация букв алфавита начинается с `1`. Например, для `s = “абба”` ответ должен быть 6. 
 ```{r abba}
 s <- 'абба'
@@ -84,7 +74,7 @@ print(sum(alphabet$assignNumbers(s)))
 
 ### __2 вариант.__ Найти  произведение  тех  порядковых  номеров  в  алфавите  символов  строки  `s`, номера которых нечетные. Нумерация букв алфавита начинается с `1`. Например, для `s = “аббв”` ответ должен быть `3`. 
 ```{r abbv}
-s <- 'аббв'
+s <- 'аяаяаябю'
 oddChars <- alphabet$assignNumbers(s)[c(TRUE, FALSE)]
 print(oddChars)
 print(prod(oddChars))
@@ -143,6 +133,7 @@ print(m)
 Матрица  `m1`  получается  из  матрицы  `m`  путем  вычеркивания  строк  и столбцов, чьи имена начинаются на буквы от `A` до `F`.
 ```{r m1}
 m1 <- m[-grep('^[A-F]', rownames(m)), -grep('^[A-F]', colnames(m))]
+m1
 ```
 
 Для матрицы `m1` найти: определитель, собственные вектора и значения, вектор диагональных элементов, $m1^2$ и матрицу `m2`, у которой $v2[i][j]$ = $(v1[i][j])^2$
@@ -176,6 +167,7 @@ print(m2)
 В не будут присутствовать данные следующих  типов:  числовые,  текстовые,  условные,  факторы.
 ```{r df}
 df <- data.frame(number=sample(1:10), text=sample(month.name[1:10]), bool=sample(rep(c(FALSE, TRUE), 5)), fact=as.factor(sample(rep(c('A', 'B'), 5))))
+df
 ```
 
 Вывести  все  такие  текстовые значения для заданного фактора, для которых числовые значения больше заданного значения.

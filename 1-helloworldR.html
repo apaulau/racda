@@ -89,7 +89,7 @@ print(v2)</code></pre>
 <p>Вывести вектор <code>v3</code> длины <code>3</code>, состоящий из случайно выбранных элементов векторов <code>v1</code> и <code>v2</code>.</p>
 <pre class="r"><code>v3 &lt;- sample(c(v1, v2), 3)
 print(v3)</code></pre>
-<pre><code>## [1] 25.11886  6.00000  5.50000</code></pre>
+<pre><code>## [1]   4.0   4.5 100.0</code></pre>
 </div>
 <div id="-----------.--s---." class="section level2">
 <h2>2. (Вектор) Задана некоторая строка текста, состоящая только из строчных символов русского языка. Например <code>s &lt;- “приветмирр”</code>.</h2>
@@ -101,13 +101,8 @@ print(v3)</code></pre>
     alphabet[number]
   }
   
-  number &lt;- function (letter) {
-    number &lt;- grep(letter, alphabet)
-    ifelse(length(number) == 0, 0, number)
-  }
-  
   assignNumbers &lt;- function(string) {
-    sapply(strsplit(string, c())[[1]], number)
+    match(strsplit(string, c())[[1]], alphabet)
   }
   
   assignLetters &lt;- function(numbers) {
@@ -120,25 +115,20 @@ print(v3)</code></pre>
 }
 
 alphabet &lt;- create.alphabet('абвгдеёжзийклмнопрстуфхцчшщъыьэюя')</code></pre>
-<!--Enter string:
-
--->
 <div id=".---------s.------1.---s-----6." class="section level3">
 <h3><strong>1 вариант.</strong> Найти сумму порядковых номеров в алфавите символов строки <code>s</code>. Нумерация букв алфавита начинается с <code>1</code>. Например, для <code>s = “абба”</code> ответ должен быть 6.</h3>
 <pre class="r"><code>s &lt;- 'абба'
 print(alphabet$assignNumbers(s))</code></pre>
-<pre><code>## а б б а 
-## 1 2 2 1</code></pre>
+<pre><code>## [1] 1 2 2 1</code></pre>
 <pre class="r"><code>print(sum(alphabet$assignNumbers(s)))</code></pre>
 <pre><code>## [1] 6</code></pre>
 </div>
 <div id=".----------s---.------1.---s-----3." class="section level3">
 <h3><strong>2 вариант.</strong> Найти произведение тех порядковых номеров в алфавите символов строки <code>s</code>, номера которых нечетные. Нумерация букв алфавита начинается с <code>1</code>. Например, для <code>s = “аббв”</code> ответ должен быть <code>3</code>.</h3>
-<pre class="r"><code>s &lt;- 'аббв'
+<pre class="r"><code>s &lt;- 'аяаяаябю'
 oddChars &lt;- alphabet$assignNumbers(s)[c(TRUE, FALSE)]
 print(oddChars)</code></pre>
-<pre><code>## а б 
-## 1 2</code></pre>
+<pre><code>## [1] 1 1 1 2</code></pre>
 <pre class="r"><code>print(prod(oddChars))</code></pre>
 <pre><code>## [1] 2</code></pre>
 </div>
@@ -188,23 +178,29 @@ print(scrambler$code(s))</code></pre>
 ## multiple or multiple of the number of rows [5]</code></pre>
 <pre class="r"><code>print(m)</code></pre>
 <pre><code>##      [,1] [,2] [,3] [,4] [,5]
-## [1,]  4.0  4.5  5.0  5.5  6.0
-## [2,]  6.5  4.0  4.5  5.0  5.5
-## [3,]  6.0  6.5  4.0  4.5  5.0
-## [4,]  5.5  6.0  6.5  4.0  4.5
-## [5,]  5.0  5.5  6.0  6.5  4.0</code></pre>
+## [1,]  4.0  6.5  6.0  5.5  5.0
+## [2,]  4.5  4.0  6.5  6.0  5.5
+## [3,]  5.0  4.5  4.0  6.5  6.0
+## [4,]  5.5  5.0  4.5  4.0  6.5
+## [5,]  6.0  5.5  5.0  4.5  4.0</code></pre>
 <p>Присвоить столбцам имена следующим образом: если <code>N</code> – это ваш номер по списку, то <code>n</code> равно остатку от деления <code>N</code> на <code>12</code> плюс <code>1</code>, тогда первый столбец имеет имя n-го месяца на английском языке, второй – <code>(n+1)</code>-го и т.д. Строки присвоить такие же имена как и столбцам.</p>
 <pre class="r"><code>start &lt;- listNumber %% 12 + 1
 rownames(m) &lt;- month.name[start : (start + 4)] -&gt; colnames(m)
 print(m)</code></pre>
 <pre><code>##           May June July August September
-## May       4.0  4.5  5.0    5.5       6.0
-## June      6.5  4.0  4.5    5.0       5.5
-## July      6.0  6.5  4.0    4.5       5.0
-## August    5.5  6.0  6.5    4.0       4.5
-## September 5.0  5.5  6.0    6.5       4.0</code></pre>
+## May       4.0  6.5  6.0    5.5       5.0
+## June      4.5  4.0  6.5    6.0       5.5
+## July      5.0  4.5  4.0    6.5       6.0
+## August    5.5  5.0  4.5    4.0       6.5
+## September 6.0  5.5  5.0    4.5       4.0</code></pre>
 <p>Матрица <code>m1</code> получается из матрицы <code>m</code> путем вычеркивания строк и столбцов, чьи имена начинаются на буквы от <code>A</code> до <code>F</code>.</p>
-<pre class="r"><code>m1 &lt;- m[-grep('^[A-F]', rownames(m)), -grep('^[A-F]', colnames(m))]</code></pre>
+<pre class="r"><code>m1 &lt;- m[-grep('^[A-F]', rownames(m)), -grep('^[A-F]', colnames(m))]
+m1</code></pre>
+<pre><code>##           May June July September
+## May       4.0  6.5  6.0       5.0
+## June      4.5  4.0  6.5       5.5
+## July      5.0  4.5  4.0       6.0
+## September 6.0  5.5  5.0       4.0</code></pre>
 <p>Для матрицы <code>m1</code> найти: определитель, собственные вектора и значения, вектор диагональных элементов, <span class="math inline">\(m1^2\)</span> и матрицу <code>m2</code>, у которой <span class="math inline">\(v2[i][j]\)</span> = <span class="math inline">\((v1[i][j])^2\)</span></p>
 <p>Determinant</p>
 <pre class="r"><code>print(det(m1))</code></pre>
@@ -220,29 +216,40 @@ print(m)</code></pre>
 <p>Squared</p>
 <pre class="r"><code>print(m1 %*% m1)</code></pre>
 <pre><code>##              May   June   July September
-## May       105.25 101.50  96.25     97.75
-## June      106.50 104.75 101.50    105.50
-## July      115.25 106.50 105.25    111.75
-## September 111.75 105.50  97.75    106.25</code></pre>
+## May       105.25 106.50 115.25    111.75
+## June      101.50 104.75 106.50    105.50
+## July       96.25 101.50 105.25     97.75
+## September  97.75 105.50 111.75    106.25</code></pre>
 <pre class="r"><code>m2 &lt;- m1 * m1
 print(m2)</code></pre>
 <pre><code>##             May  June  July September
-## May       16.00 20.25 25.00     36.00
-## June      42.25 16.00 20.25     30.25
-## July      36.00 42.25 16.00     25.00
-## September 25.00 30.25 36.00     16.00</code></pre>
+## May       16.00 42.25 36.00     25.00
+## June      20.25 16.00 42.25     30.25
+## July      25.00 20.25 16.00     36.00
+## September 36.00 30.25 25.00     16.00</code></pre>
 </div>
 <div id="----dataframe" class="section level2">
 <h2>4. Создать произвольную таблицу данных (Dataframe)</h2>
 <p>В не будут присутствовать данные следующих типов: числовые, текстовые, условные, факторы.</p>
-<pre class="r"><code>df &lt;- data.frame(number=sample(1:10), text=sample(month.name[1:10]), bool=sample(rep(c(FALSE, TRUE), 5)), fact=as.factor(sample(rep(c('A', 'B'), 5))))</code></pre>
+<pre class="r"><code>df &lt;- data.frame(number=sample(1:10), text=sample(month.name[1:10]), bool=sample(rep(c(FALSE, TRUE), 5)), fact=as.factor(sample(rep(c('A', 'B'), 5))))
+df</code></pre>
+<pre><code>##    number      text  bool fact
+## 1       3   January FALSE    A
+## 2       8    August  TRUE    A
+## 3       6      June FALSE    B
+## 4       5   October  TRUE    A
+## 5       7 September  TRUE    B
+## 6      10  February  TRUE    B
+## 7       1     March FALSE    A
+## 8       2       May FALSE    A
+## 9       4      July FALSE    B
+## 10      9     April  TRUE    B</code></pre>
 <p>Вывести все такие текстовые значения для заданного фактора, для которых числовые значения больше заданного значения.</p>
 <pre class="r"><code>df[df$fact == &quot;A&quot; &amp; df$number &gt; 2, ]</code></pre>
 <pre><code>##   number    text  bool fact
-## 1      9 January  TRUE    A
-## 2      6   April  TRUE    A
-## 7      8 October FALSE    A
-## 8      5  August  TRUE    A</code></pre>
+## 1      3 January FALSE    A
+## 2      8  August  TRUE    A
+## 4      5 October  TRUE    A</code></pre>
 </div>
 <div id="---------x1-x2-x3----n--." class="section level2">
 <h2>5. (Таблица) ИЗ файла загрузить таблицу, состоящую из трех переменных (x1, x2, x3) (переменная = столбец) и n наблюдений (строк).</h2>
@@ -257,18 +264,18 @@ rm(out)</code></pre>
 <p>And read :)</p>
 <pre class="r"><code>table &lt;- read.table(&quot;data/lab1.csv&quot;)
 head(table)</code></pre>
-<pre><code>##         x1       x2        x3
-## 1 8.944737 2.647733 8.5672258
-## 2 1.675888 8.340841 7.1716742
-## 3 8.879796 8.567295 0.1340817
-## 4 8.546756 3.166286 2.9939600
-## 5 1.281499 4.373593 8.1124117
-## 6 4.117391 3.185448 4.5041173</code></pre>
+<pre><code>##         x1        x2       x3
+## 1 1.357954 5.0384431 5.265108
+## 2 9.649091 5.8267696 6.147918
+## 3 7.853443 8.4175469 3.499120
+## 4 2.753073 2.0207247 7.032526
+## 5 1.140158 3.1489988 7.128562
+## 6 2.364647 0.2849183 8.678233</code></pre>
 <div id="-1.-sum_i1n-i-x2_1-i-x4_2-i-n-1-x3_2-i-1-n-1" class="section level3">
 <h3>Вариант 1. <span class="math display">\[\sum_{i=1}^n i x^2_{1, i} x^4_{2, i \% n + 1} x^3_{2, (i + 1) \% n + 1} \]</span></h3>
 <pre class="r"><code>sum1 &lt;- sum(seq_along(table[, 2]) * table[, 1]^2 * table[seq_along(table[, 2]) %% n + 1, 2]^4 * table[(seq_along(table[, 2]) + 1) %% n + 1, 2]^3)
 print(sum1)</code></pre>
-<pre><code>## [1] 18241492941</code></pre>
+<pre><code>## [1] 140830193634</code></pre>
 </div>
 <div id="-2.-sum_i1n-i---1-5-1-xi_i---1-3-1-i" class="section level3">
 <h3>Вариант 2. <span class="math display">\[\sum_{i=1}^n ((i - 1) \% 5 + 1) x^i_{(i - 1) \% 3 + 1, i} \]</span></h3>
@@ -276,7 +283,7 @@ print(sum1)</code></pre>
   ((i - 1) %% 5 + 1) * table[i, (i - 1) %% 3 + 1]^i
 }))
 print(sum2)</code></pre>
-<pre><code>## [1] 1.880778e+92</code></pre>
+<pre><code>## [1] 8.680275e+87</code></pre>
 </div>
 <div id="-3.-sum_i1n-fracx_1-ix_2-i---x_3-i2-x_1-1-x_i---1-3-1-1" class="section level3">
 <h3>Вариант 3. <span class="math display">\[\sum_{i=1}^n (\frac{x_{1, i}}{x_{2, i}} - x_{3, i})^2 (x_{1, 1} + x_{(i - 1) \% 3 + 1, 1}) \]</span></h3>
@@ -284,7 +291,7 @@ print(sum2)</code></pre>
   (table[i, 1] / table[i, 2] - table[i, 3])^2 * (table[1, 1] + table[1, (i - 1) %% 3 + 1])
 }))
 print(sum3)</code></pre>
-<pre><code>## [1] 139406.3</code></pre>
+<pre><code>## [1] 17189.09</code></pre>
 </div>
 <div id="-4.-sum_i1n-ix_1-i-x_2-i-land-x_1-i-x_3-i-x_3-i---x_1-ix_2-i---x_1-i-ix_2-i-x_3-ix_1-i2" class="section level3">
 <h3>Вариант 4. <span class="math display">\[\sum_{i=1}^n (I\{x_{1, i} &lt; x_{2, i} \land x_{1, i} &lt; x_{3, i} \}(x_{3, i} - x_{1, i})(x_{2, i} - x_{1, i}) + I\{x_{2, i} &gt; x_{3, i}\}x_{1, i}^2) \]</span></h3>
@@ -296,28 +303,28 @@ subset2[!(table[, 2] &gt; table[, 3]), ] &lt;- 0
 sum4 &lt;- sum((subset1[, 3] - subset1[,1])* (subset1[, 2] - subset1[, 1]) + subset2[, 1]^2)
 end.time &lt;- Sys.time()
 print(sum4)</code></pre>
-<pre><code>## [1] 1824.826</code></pre>
+<pre><code>## [1] 2786.584</code></pre>
 <pre class="r"><code>print(end.time - start.time)</code></pre>
-<pre><code>## Time difference of 0.01947188 secs</code></pre>
+<pre><code>## Time difference of 0.006650448 secs</code></pre>
 <pre class="r"><code>start.time &lt;- Sys.time()
 sum4 &lt;- sum(sapply(seq_along(table[, 1]), function(i) {
   ifelse(table[i, 1] &lt; table[i, 2] &amp; table[i, 1] &lt; table[i, 3], 1, 0) * (table[i, 3] - table[i, 1]) * (table[i, 2] - table[i, 1]) + ifelse(table[i, 2] &gt; table[i, 3], 1, 0) * table[i, 1]^2
 }))
 end.time &lt;- Sys.time()
 print(sum4)</code></pre>
-<pre><code>## [1] 1824.826</code></pre>
+<pre><code>## [1] 2786.584</code></pre>
 <pre class="r"><code>print(end.time - start.time)</code></pre>
-<pre><code>## Time difference of 0.04347014 secs</code></pre>
+<pre><code>## Time difference of 0.01894426 secs</code></pre>
 </div>
-<div id="-5.-j13-i1n-ix_j-i-x_1-i-x_j-i-x_2-i-x_j-i-x_3-i-x_j-3-1-ii-j-3-1" class="section level3">
-<h3>Вариант 5. $<em>{j=1}^3 </em>{i=1}^n (I{x_{j, i} x_{1, i} x_{j, i} &lt; x_{2, i} x_{j, i} &lt; x_{3, i} } x_{j % 3 + 1, i}^{(i + j) % 3 + 1} $</h3>
+<div id="-5.-sum_j13-sum_i1n-ix_j-i-le-x_1-i-land-x_j-i-x_2-i-land-x_j-i-x_3-i-x_j-3-1-ii-j-3-1" class="section level3">
+<h3>Вариант 5. <span class="math display">\[\sum_{j=1}^3 \sum_{i=1}^n (I\{x_{j, i} \le x_{1, i} \land x_{j, i} &lt; x_{2, i} \land x_{j, i} &lt; x_{3, i} \} x_{j \% 3 + 1, i}^{(i + j) \% 3 + 1} \]</span></h3>
 <pre class="r"><code>sum5 &lt;- sum(sapply(seq_along(table), function(j) {
   sapply(seq_along(table[, 1]), function(i) {
     ifelse(table[i, j] &lt;= table[i, 1] &amp; table[i, j] &lt;= table[i, 2] &amp; table[i, j] &lt;= table[i, 3], 1, 0) * table[i, j %% 3 + 1]^((i + j) %% 3 + 1)
   })
 }))
 print(sum5)</code></pre>
-<pre><code>## [1] 13583.8</code></pre>
+<pre><code>## [1] 13367.64</code></pre>
 </div>
 </div>
 
