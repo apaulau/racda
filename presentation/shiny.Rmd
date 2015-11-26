@@ -1,0 +1,340 @@
+---
+title: "Shiny"
+subtitle: "Interactive Web Applications in R"
+author: "Paulau Aliaksandr"
+date: "November 26, 2015"
+output: 
+  ioslides_presentation:
+    incremental: yes
+runtime: shiny
+---
+
+<style type="text/css">
+
+slides > slide:before {
+  font-size: 12pt;
+  content: 'apaulau.shinyapps.io/shiny';
+  position: absolute;
+  text-align: center;
+  bottom: 15px;
+  left: 50%;  
+  margin-left: -300px;
+  width: 600px;
+  line-height: 1.9;
+}
+
+div.img-col{
+  text-align: center;
+  font-size: 14pt;
+}
+
+a {
+  border-bottom: none !important;
+}
+
+.wrapper {
+  margin: 70px auto;
+  position: relative;
+  z-index: 90;
+}
+
+.note > section {
+  width: 80% !important;
+}
+
+.note pre {
+  left: -52px !important;
+}
+
+.gallery img {
+  width: 45%;
+}
+
+.small-table table td {
+  font-size: 10px !important;
+}
+</style>
+
+## Why R in browser?
+
+ - Everyone has browser
+ - Represent results dynamically
+ - Create custom analytics tools to explore data
+
+## About Shiny
+
+ - Interactive web application framework for R
+ - Open sourced (GPL v3) by RStudio in 2012
+ - Create and share applications with others
+ - Can create autonomous webpages, or embedded interactive widgets in RMarkdown
+
+## Features
+
+ - Works everywhere where browser exists (e.g. Linux, Windows)
+ - Build useful web applications with only a few lines of code — no JavaScript required.
+ - Shiny user interfaces can be built entirely using R, or can be written directly in HTML, CSS, and JavaScript for more flexibility.
+ - Default UI theme based on Bootstrap.
+ - Web sockets for communication between client and server
+ - Uses a reactive programming model that eliminates messy event handling code, so you can focus on the code that really matters.
+ 
+
+## Example Shiny App {.smaller}
+
+```{r, echo=FALSE}
+library(datasets)
+library(ggplot2)
+shinyApp(
+  ui = fluidPage(
+    selectInput("region", "Region:", 
+                choices = colnames(WorldPhones)),
+    plotOutput("phonePlot")
+  ),
+  
+  server = function(input, output) {
+    output$phonePlot <- renderPlot({
+      barplot(WorldPhones[,input$region]*1000, 
+              ylab = "Number of Telephones", xlab = "Year",
+              main = paste("Phones in", input$region))
+    })
+  },
+  options = list(height = 500)
+)
+```
+
+<div class="notes">
+### Source
+```r
+library(datasets)
+shinyApp(
+  ui = fluidPage(
+    selectInput("region", "Region:", 
+                choices = colnames(WorldPhones)),
+    plotOutput("phonePlot")
+  ),
+  
+  server = function(input, output) {
+    output$phonePlot <- renderPlot({
+      barplot(WorldPhones[,input$region]*1000, 
+              ylab = "Number of Telephones", xlab = "Year",
+              main = paste("Phones in", input$region))
+    })
+  },
+  options = list(height = 500)
+)
+```
+</div>
+
+
+## How does it work?
+
+Shiny apps have two components:
+
+ - user interface script (controls layout and appearance by converting R code into HTML)
+ - server script (application logic)
+ 
+## Example Shiny App -- Dataset
+
+Example relies on the `WorldPhones` dataset from `datasets` package (which generally come preloaded).
+
+```{r}
+library(datasets)
+head(WorldPhones)
+```
+
+## Example Shiny App -- `ui.R`
+
+```r
+library(shiny)
+library(datasets)
+
+shinyUI(
+  # Use a fluid Bootstrap layout
+  fluidPage(
+    # Create a select dropdown
+    selectInput("region", "Region:", 
+                choices = colnames(WorldPhones)),
+    
+    # A placeholder for the barplot
+    plotOutput("phonePlot")
+  )
+)
+```
+
+## Example Shiny App -- `server.R`
+
+```r
+library(shiny)
+library(datasets)
+
+shinyServer(function(input, output, session) {
+  # Fill in the placeholder we created for plot
+  output$phonePlot <- renderPlot({
+  
+    # Create a barplot for the selected region
+    barplot(WorldPhones[, input$region] * 1000, 
+            ylab = "Number of Telephones", xlab = "Year")
+  })
+})
+```
+
+## Most common steps in research
+
+ - Look into the data (or part of it)
+ - Summarize data (basic descriptive statistics)
+ - Visualize data (some basic plots)
+ - Make some decisions based on results
+ 
+## Diamonds research
+
+Let's imagine we have `diamonds` (from `ggplot2` package) dataset.
+
+## View data
+```{r}
+head(diamonds, n = 3)
+```
+
+```{r}
+unique(diamonds$clarity)
+```
+
+```{r}
+#unique(diamonds$color)
+#tail(diamonds)
+#diamonds
+```
+
+## Summarize data {.smaller}
+```{r}
+summary(diamonds)
+```
+
+## Visualize data -- Scatter Plot {.smaller}
+```{r}
+ggplot(diamonds, aes(x = carat, y = price)) + geom_point()
+```
+
+## Visualize data -- Scatter Plot {.smaller}
+```{r}
+ggplot(diamonds, aes(x = carat, y = price, color = clarity)) + geom_point()
+```
+
+## Recap
+
+ - View data (or part of it) using `head`, `tail`, `unique` or even entire data
+ - Summarize data using `summary`
+ - Visualize data with scatterplot
+ 
+## Ok, and what's the problem?
+ 
+ - What if we need to change size of the dataset to see how data, summary and plots change?
+ - What if someone wants to specify any variable for `x` and `y` axes for the scatterplot?
+ - What if someone wants to colorize points by some variable in dataset?
+ - What if someone wants to specify some plot options?
+ - What if ...
+ 
+## Let's make user interface -- Layouts
+
+First of all we need to specify layout. According to http://shiny.rstudio.com/articles/layout-guide.html there is layouts
+
+Layout          | Description
+------          | -----------
+flowLayout      | Flow layout
+sidebarLayout   | Layout a sidebar and main area
+splitLayout     | Split layout
+verticalLayout  | Lay out UI elements vertically
+
+## UI -- Pages
+
+And pages
+
+Page            | Description
+------          | -----------
+fixedPage       | Create a page with a fixed layout
+bootstrapPage   | Create a Bootstrap page
+fluidPage       | Create a page with fluid layout
+navbarPage      | Create a page with a top level navigation bar
+pageWithSidebar | Create a page with a sidebar
+
+## UI -- what controls we need?
+
+ - Control for sample size
+ - Controls for variable change
+ - Plot options controls
+ - Something else
+
+## UI -- what inputs we have? {.smaller}
+<div class="small-table">
+
+Function	          Widget
+--------            ------
+actionButton	      Action Button
+checkboxGroupInput	A group of check boxes
+checkboxInput	      A single check box
+dateInput	          A calendar to aid date selection
+dateRangeInput	    A pair of calendars for selecting a date range
+fileInput	          A file upload control wizard
+helpText	          Help text that can be added to an input form
+numericInput	      A field to enter numbers
+radioButtons	      A set of radio buttons
+selectInput	        A box with choices to select from
+sliderInput	        A slider bar
+submitButton	      A submit button
+textInput	          A field to enter text
+
+</div>
+Source: http://shiny.rstudio.com/gallery/widget-gallery.html
+
+## UI -- output functions
+
+Output Function	    Output
+---------------     ------
+htmlOutput	        raw HTML
+imageOutput	        image
+plotOutput	        plot
+tableOutput	        table
+textOutput	        text
+uiOutput	          raw HTML
+verbatimTextOutput	text
+
+## UI -- rendering
+
+Render Function Creates
+--------------- -------
+renderImage	    images (saved as a link to a source file)
+renderPlot	    plots
+renderPrint	    any printed output
+renderTable	    data frame, matrix, other table like structures
+renderText	    character strings
+renderUI	      a Shiny tag object or HTML
+
+## Deploying/Sharing application {.smaller}
+
+If `R` and `Shiny` available on computer:
+
+ - Just two files (or with shinyApp -- one file)
+ - `runUrl` -- from any web link to a zip file with compressed two files
+ - `runGist` -- from github's gist (Try `runGist('739a66d0e6fa03d191eb')`)
+ - `runGitHub` -- from github's repo (Try `runGitHub('exdiamonds', 'solis')`)
+
+Else 
+
+ - http://shinyapps.io -- try https://apaulau.shinyapps.io/exdiamonds
+ - Amazon AWS -- https://github.com/chrisrzhou/RShiny-EC2Bootstrap
+ - Shiny Server -- Open Source or Professional https://www.rstudio.com/products/shiny/shiny-server/
+
+## More Examples
+
+<div class="gallery">
+  <a href="http://shiny.rstudio.com/gallery/update-input-demo.html">![widgets](http://shiny.rstudio.com/gallery/images/thumbnails/update-input-demo.png)</a>
+  <a href="http://shiny.rstudio.com/gallery/basic-datatable.html">![data tables](http://shiny.rstudio.com/gallery/images/thumbnails/basic-datatable.png)</a>
+  <a href="https://jcheng.shinyapps.io/superzip/">![leaflet](http://shiny.rstudio.com/gallery/images/thumbnails/superzip-example.png)</a>
+  <a href="http://shiny.rstudio.com/gallery/movie-explorer.html">![explorer](http://shiny.rstudio.com/gallery/images/thumbnails/movie-explorer.png)</a>
+</div>
+
+## Next steps
+
+ - Get inspired. http://shiny.rstudio.com/gallery/
+ - Get started. http://shiny.rstudio.com/tutorial/
+ - Go deeper. http://shiny.rstudio.com/articles/
+ - Need help? Google `shiny 'question'`
+

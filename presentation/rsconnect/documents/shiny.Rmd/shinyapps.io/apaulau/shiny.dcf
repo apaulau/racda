@@ -1,0 +1,8 @@
+name: shiny
+account: apaulau
+server: shinyapps.io
+bundleId: 319428
+url: https://apaulau.shinyapps.io/shiny
+when: 1448543023.42648
+asMultiple: FALSE
+asStatic: FALSE
