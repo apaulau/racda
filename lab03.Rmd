@@ -1,0 +1,252 @@
+---
+title: "Регрессионный Анализ"
+output:
+  html_document:
+    keep_md: yes
+    toc: yes
+  pdf_document:
+    toc: yes
+---
+
+```{r}
+library(ggplot2)
+set.seed(1234)
+```
+
+
+## Нормальная регрессия
+
+Сгенерировать выборку из `N = 100` `4`-х мерных векторов из нормального закона распределения с ненулевым вектором математического ожидания и недиагональной ковариационной матрицей. Ковариационная матрица должна генерироваться случайно перед генерацией выборки и должна удовлетворять всем свойствам ковариационной матрицы. Затем, считая первые компоненты элементов сгенерированной выборки зависимыми переменными, а остальные компоненты -- независимыми в модели линейной регрессии, найти оценки коэффициентов регрессии и дисперсии случайных ошибок. Проверить остатки модели на нормальность. Найти истинные значения коэффициентов регрессии (см. лабораторную работу 2) и сравнить их с полученными оценками.
+
+### Инициализируем случайным образом параметры нормального распределения и генерируем выборку.
+
+```{r PD-matrix}
+PDmatrix <- function(n, ev = runif(n, 0, 10)) {
+  Z <- matrix(ncol = n, rnorm(n ^ 2))
+  decomp <- qr(Z)
+  Q <- qr.Q(decomp)
+  R <- qr.R(decomp)
+  d <- diag(R)
+  ph <- d / abs(d)
+  O <- Q %*% diag(ph)
+  Z <- t(O) %*% diag(ev) %*% O
+  return(Z)
+}
+```
+
+Генерируем выборку из `N = 100` `4`-х мерных векторов из нормального закона распределения с ненулевым вектором математического ожидания и недиагональной ковариационной матрицей.
+```{r init}
+N <- 10 ^ 3
+n <- 4
+mu <- runif(n, 0, 10)
+sigma <- PDmatrix(n)
+
+print(mu)
+print(sigma)
+```
+
+```{r}
+require(MASS)
+
+X <- mvrnorm(n = N, mu = mu, Sigma = sigma)
+X = as.data.frame(X)
+colnames(X) <- c('x1', 'x2', 'x3', 'x4')
+head(X)
+```
+
+### Оценка коэффициенты регрессии
+
+Подгоняем модель.
+```{r}
+model <- lm(x1 ~ x2 + x3 + x4, data = X)
+summary(model)
+```
+
+
+```{r}
+coef <- coefficients(model)
+resid <- residuals(model)
+
+residvar <- var(resid)
+residmean <- coef[1]
+residvar
+residmean
+```
+
+### Проверка на нормальность
+
+```{r}
+shapiro.test(resid)
+ggplot(data.frame(x = resid), aes(x)) + 
+  geom_histogram(binwidth = 1, aes(y = ..density..), colour = "black", fill = "white") + 
+  geom_density(alpha = .2, fill = "lightblue")
+ggplot(data.frame(x = resid), aes(sample = x)) + stat_qq()
+```
+
+Остатки распределены нормально.
+
+### Истинные значения коэффициентов регрессии
+
+По формулам из лабораторной работы 2, то есть:
+
+$\mu_{1.2} = \mu_{(1)} + \Sigma_{(12)}\Sigma^{-1}_{(22)} (x_{(2)} - \mu_{(2)})$
+
+Тогда нам нужно подтвердить близость следующих значений:
+
+* $\mu_{(1)} + \Sigma_{(12)}\Sigma^{-1}_{(22)}\mu_{(2)}$ и коэффициент при `Intercept`;
+* $\Sigma_{(12)}\Sigma^{-1}_{(22)}$ и коэффициентов при `x1`-`x3`.
+
+```{r}
+print(mu[1] - sigma[1,2:n] %*% solve(sigma[2:n,2:n]) %*% mu[2:n])
+print(residmean)
+print(sigma[1,2:n] %*% solve(sigma[2:n,2:n]))
+print(coef[-1])
+```
+
+## Подбор оптимальной регрессионной модели
+
+Из файла `Lab2Task2Var[x].scv` загрузить данные. Вместо `[x]` необходимо подставить ваш номер варианта. Данные содержат как значения зависимых переменных, так и независимых. Вид зависимости известен и задан в таблице. Однако кроме коэффициентов регрессии неизвестен и коэффициент. Предложите метод оценивания всех неизвестных коэффициентов, и оцените их. Приведите графическую иллюстрацию полученных результатов.
+
+Вариант `6` -- зависимость $y_{i} = \beta_{0} + \beta_{1} \sin{\alpha x_{i}} + \varepsilon_{i}$
+
+```{r}
+data2 <- read.csv(file = "data/Lab2Task2Var6.csv")
+head(data2)
+data2$X <- NULL
+head(data2)
+```
+
+Будем оценивать неизвестные коэффициенты при помощи модели линейной регрессии, а параметр $\alpha$ -- на некотором дискретном множестве доступных значений.
+Поскольку $\alpha$ -- детерминированная величина, то на каждом шаге эксперимента просто ко всему вектору $x$ будем ее добавлять.
+Критерием качества будем считать величину Adjusted R-squared, чем эта величина больше, тем лучше.
+
+```{r}
+alpha.seq <- seq(from = -50, to = 50, by = 1)
+
+regr.with.alpha <- function(alpha.seq) {
+    # Pre-allocate data frame space with proper data types
+    df.len <- length(alpha.seq)
+    df <- data.frame(beta.0 = numeric(df.len), beta.1 = numeric(df.len), pval = numeric(df.len), adjr2 = numeric(df.len))
+    
+    for (i in 1:df.len) {
+      if (alpha.seq[i] != 0) {
+        experdata2 <- data.frame(x = data2$x * alpha.seq[i],y = data2$y)
+        model <- lm(formula = y ~ 1 + sin(x), data = experdata2)
+        df$beta.0[i] <- model$coefficients[[1]]
+        df$beta.1[i] <- model$coefficients[[2]]
+        sum.mod <- summary(model)
+        df$pval[i] <- pf(sum.mod$fstatistic[1], sum.mod$fstatistic[2], sum.mod$fstatistic[3], lower.tail = FALSE)
+        df$adjr2[i] <- sum.mod$adj.r.squared
+      }
+    }
+    
+    df$alpha <- alpha.seq
+    
+    return(df)
+}
+
+resultingdf <- regr.with.alpha(alpha.seq = alpha.seq)
+
+head(resultingdf)
+ggplot(resultingdf, aes(x = alpha, y = adjr2)) + geom_point()
+
+```
+
+Отсюда видно, что $\alpha \in (-20,20)$. В этом диапазоне проведем такой же эксперимент с уменьшенным шагом изменения $\alpha$.
+
+```{r}
+alpha.seq2 <- seq(from = -20, to = 20, by = .1)
+
+resultingdf2 <- regr.with.alpha(alpha.seq = alpha.seq2)
+
+head(resultingdf2)
+ggplot(resultingdf2, aes(x = alpha, y = adjr2)) + geom_point()
+
+```
+
+Теперь $\alpha \in (9.75,10)$. Уменьшим шаг последний раз:
+
+```{r}
+alpha.seq3 <- seq(from = 9.75, to = 10, by = 0.01)
+
+resultingdf3 <- regr.with.alpha(alpha.seq = alpha.seq3)
+
+resultingdf3
+ggplot(resultingdf3, aes(x = alpha, y = adjr2)) + geom_point()
+
+```
+
+Считаем $\alpha = 0.92$, $\hat{\beta}_{0} = 0.0895$, $\hat{\beta}_{1} = 0.917$.
+
+
+```{r}
+fitted <- sapply(data2$x, function(i) 0.0895 + 0.917*sin(9.92*i))
+
+ggplot(data2, aes(x,y)) + geom_point() + geom_line(data=data.frame(x=data2$x, y=fitted), aes(x,y))
+```
+
+
+## Подбор регрессионной модели
+
+Из файла `Lab2Task3Var[x].scv` загрузить данные. Вместо `[x]` необходимо подставить ваш номер варианта. Данные содержат как значения зависимых переменных, так и независимых в модели множественной линейной регрессии. Найти оценки коэффициентов регрессии, определить какие из них статистически значимые, а какие нет. Обратите внимание, что в значениях `y` есть пропуски. Кроме этого провести "пошаговую оценку коэффициентов регрессии" как с добавлением переменных, так и с удалением. Выберете на ваш взгляд наиболее адекватную модель (если модели получились различные) и спрогнозируйте те значения `y`, которые были пропущены.
+
+Вариант `6`.
+
+```{r}
+data3 <- read.csv(file = "data/Lab3Task3Var6.csv")
+head(data3)
+data3$X <- NULL
+head(data3)
+length(data3$y)
+sum(complete.cases(data3))
+
+length(data3$y) == sum(complete.cases(data3))
+
+percent <- 0.1
+nas <- round(percent * N)
+
+data3$y[sample(1:N)[1:nas]] <- NA 
+# length(data3$y) == sum(complete.cases(data3))
+```
+
+Пропусков в данных нету. Для перестраховки:
+
+```{r}
+data3.compl <- data3[complete.cases(data3), ]
+data3.incompl <- data3[!complete.cases(data3), ]
+```
+
+```{r}
+model <- lm(formula = y ~ ., data = data3.compl)
+summary(model)
+
+```
+
+Можно сделать вывод, что значимыми в модели являются переменные `x1`, `x2`, `x4`, `x7`. Переменная `x10` остаётся под вопросом.
+
+Проведем пошаговую оценку.
+
+```{r}
+step <- stepAIC(model, direction = "both")model <- lm(formula = y ~ x.1 + x.2 + x.4 + x.7 + x.10 - 1, data = data3.compl)
+step$anova
+```
+
+Проверим нужно ли включать `x10`:
+
+```{r}
+
+model <- lm(formula = y ~ x.1 + x.2 + x.4 + x.7 + x.10 - 1, data = data3.compl)
+summary(model)
+
+```
+```{r}
+model <- lm(formula = y ~ x.1 + x.2 + x.4 + x.7 - 1, data = data3.compl)
+summary(lm(formula = y ~ x.1 + x.2 + x.4 + x.7 - 1, data = data3.compl))
+
+```
+Итого: модель имеет вид `y ~x.1 + x.2 + x.4 + x.7 - 1`. Делаем прогноз:
+
+```{r}
+p <- predict(model, newdata = data3.incompl)
+```
+

@@ -1,0 +1,69 @@
+---
+title: "Regression"
+output: 
+  html_document: 
+    keep_md: yes
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+### 1. Сгенерировать выборку из `N=100` 4-х мерных векторов из нормального закона распределения с ненулевым вектором математического ожидания и недиагональной ковариационной матрицей.
+
+Ковариационная матрица должна генерироваться случайно перед генерацией выборки и должна удовлетворять всем свойствам ковариационной матрицы.
+
+Define function for generating a random positive-definite matrix with user-specified positive eigenvalues. If eigenvalues are not specified, they are generated from a uniform distribution.
+```{r PD-matrix}
+PDmatrix <- function(n, ev = runif(n, 0, 10)) {
+  Z <- matrix(ncol = n, rnorm(n^2))
+  decomp <- qr(Z)
+  Q <- qr.Q(decomp) 
+  R <- qr.R(decomp)
+  d <- diag(R)
+  ph <- d / abs(d)
+  O <- Q %*% diag(ph)
+  Z <- t(O) %*% diag(ev) %*% O
+  return(Z)
+}
+```
+
+Initialize variables
+```{r init}
+N <- 10 ^ 2
+n <- 4
+mu <- runif(n, 0, 100)
+sigma <- PDmatrix(n)
+
+print(mu)
+print(sigma)
+```
+
+
+Generate multidimensional sample with init values
+```{r mnorm}
+library(MASS)
+sample <- data.frame(mvrnorm(N, mu, sigma))
+
+head(sample)
+```
+
+Затем, считая первые компоненты элементов сгенерированной выборки зависимыми переменными, а остальные компоненты -- независимыми в модели линейной регрессии, найти оценки коэффициентов регрессии и дисперсии случайных ошибок. 
+```{r regr}
+regr <- with(sample, {lm(X1 ~ X2 + X3 + X4)})
+
+print(regr)
+head(regr$residuals)
+
+print(var(summary(regr)$coefficients[2,]))
+```
+
+Проверить остатки модели на нормальность.
+```{r norm}
+shapiro.test(regr$residuals)
+qqnorm(regr$residuals)
+```
+
+Найти истинные значения коэффициентов регрессии (см. лабораторную работу 2) и сравнить их с полученными оценками.
